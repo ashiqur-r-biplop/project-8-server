@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
@@ -29,8 +29,32 @@ async function run() {
         // Data Base Create:
         // Create Database and Collection:
         const userCollection = client.db('Dhaka_Bus_Ticket').collection('users');
-        const ticketsCollection = client.db('Dhaka_Bus_Ticket').collection('users');
+        const ticketsCollection = client.db('Dhaka_Bus_Ticket').collection('tickets');
+        const allBusCollection = client.db('Dhaka_Bus_Ticket').collection('allBusCollection');
 
+
+        // Load All Bus Collection:
+        app.get('/all-bus', async (req, res) => {
+            const allBus = allBusCollection.find();
+            const result = await allBus.toArray();
+            res.send(result);
+        });
+
+        app.put('/book-ticket', async (req, res) => {
+            const bookInformation = req.body;
+            const busId = bookInformation.bus_id;
+            const updatedBookedSeat = bookInformation.updateBookedSeat;
+            const filter = { _id: new ObjectId(busId) };
+            const options = { upsert: true };
+            // create a document that sets the plot of the movie
+            const updateDoc = {
+                $set: {
+                    bookedSeat: updatedBookedSeat
+                },
+            };
+            const result = await allBusCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
