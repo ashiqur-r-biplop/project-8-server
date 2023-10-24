@@ -14,94 +14,119 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    },
 });
 
 async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    try {
+        // Connect the client to the server	(optional starting in v4.7)
+        await client.connect();
 
-    // Data Base Create:
-    // Create Database and Collection:
-    const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
-    const ticketsCollection = client.db("Dhaka_Bus_Ticket").collection("users");
-    const noticesCollection = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("notices");
+        // Data Base Create:
+        // Create Database and Collection:
+        const userCollection = client.db('Dhaka_Bus_Ticket').collection('users');
+        const ticketsCollection = client.db('Dhaka_Bus_Ticket').collection('tickets');
+        const allBusCollection = client.db('Dhaka_Bus_Ticket').collection('allBusCollection');
+        const noticesCollection = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("notices");
 
-    app.post("/post_note", async (req, res) => {
-      try {
-        const body = req.body;
-        const result = await noticesCollection.insertOne(body);
-        res.send(result);
-      } catch (error) {
-        console.log(error);
-      }
-    });
-    app.get("/notices", async (req, res) => {
-      try {
-        const allNotes = await noticesCollection.find().toArray();
-        res.send(allNotes);
-      } catch (error) {
-        console.log(error);
-      }
-    });
-    app.delete("/delete-notice/:id", async (req, res) => {
-      try {
-        const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await noticesCollection.deleteOne(query);
-        res.send(result);
-      } catch (error) {
-        console.log(error);
-      }
-    });
-    app.patch("/update-notice/:id", async (req, res) => {
-      try {
-        const id = req.params.id;
-        const body = req.body;
-        const query = { _id: new ObjectId(id) };
-        const option = { upsert: true };
-        const updateNotice = {
-          $set: {
-            notice: body?.notice,
-            createNoteDate: body?.createNoteDate,
-            updateNoticeDate: body?.updateNoticeDate,
-          },
-        };
-        const result = await noticesCollection.updateOne(
-          query,
-          updateNotice,
-          option
+
+        // Load All Bus Collection:
+        app.get('/all-bus', async (req, res) => {
+            const allBus = allBusCollection.find();
+            const result = await allBus.toArray();
+            res.send(result);
+        });
+
+        app.put('/book-ticket', async (req, res) => {
+            const bookInformation = req.body;
+            const busId = bookInformation.bus_id;
+            const updatedBookedSeat = bookInformation.updateBookedSeat;
+            const filter = { _id: new ObjectId(busId) };
+            const options = { upsert: true };
+            // create a document that sets the plot of the movie
+            const updateDoc = {
+                $set: {
+                    bookedSeat: updatedBookedSeat
+                },
+            };
+            const result = await allBusCollection.updateOne(filter, updateDoc, options);
+            res.json(result)
+        })
+
+        app.post("/post_note", async (req, res) => {
+            try {
+                const body = req.body;
+                const result = await noticesCollection.insertOne(body);
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        app.get("/notices", async (req, res) => {
+            try {
+                const allNotes = await noticesCollection.find().toArray();
+                res.send(allNotes);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        app.delete("/delete-notice/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const query = { _id: new ObjectId(id) };
+                const result = await noticesCollection.deleteOne(query);
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        app.patch("/update-notice/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const body = req.body;
+                const query = { _id: new ObjectId(id) };
+                const option = { upsert: true };
+                const updateNotice = {
+                    $set: {
+                        notice: body?.notice,
+                        createNoteDate: body?.createNoteDate,
+                        updateNoticeDate: body?.updateNoticeDate,
+                    },
+                };
+                const result = await noticesCollection.updateOne(
+                    query,
+                    updateNotice,
+                    option
+                );
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+
+        // Send a ping to confirm a successful connection
+        await client.db("admin").command({ ping: 1 });
+
+        console.log(
+            "Pinged your deployment. You successfully connected to MongoDB!"
         );
-        res.send(result);
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+    } finally {
+        // Ensures that the client will close when you finish/error
+        // await client.close();
+    }
 }
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Dhaka Bus Ticket Server is Running!");
+    res.send("Dhaka Bus Ticket Server is Running!");
 });
 
 app.listen(port, (req, res) => {
-  console.log(`Dhaka Bus Ticket Server Running on: ${port}`);
+    console.log(`Dhaka Bus Ticket Server Running on: ${port}`);
 });
