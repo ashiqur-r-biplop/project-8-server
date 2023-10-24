@@ -42,7 +42,7 @@ async function run() {
             const result = await allBus.toArray();
             res.send(result);
         });
-
+        // Booked Seat in Bus:
         app.put('/book-ticket', async (req, res) => {
             const bookInformation = req.body;
             const busId = bookInformation.bus_id;
@@ -59,7 +59,7 @@ async function run() {
             res.json(result)
         })
 
-        app.post("/post_note", async (req, res) => {
+        app.post("/post-note", async (req, res) => {
             try {
                 const body = req.body;
                 const result = await noticesCollection.insertOne(body);
