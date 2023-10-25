@@ -6,6 +6,9 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
+// const crypto = require("crypto").randomBytes(64).toString("hex");
+// console.log(crypto);
+
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -21,6 +24,23 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).json({ error: true, message: "Unauthorized access" });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: true, message: "Unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -32,6 +52,14 @@ async function run() {
     const ticketsCollection = client.db("Dhaka_Bus_Ticket").collection("tickets");
     const allBusCollection = client.db("Dhaka_Bus_Ticket").collection("allBusCollection");
     const noticesCollection = client.db("Dhaka_Bus_Ticket").collection("notices");
+    const testingAllBus = client.db("Dhaka_Bus_Ticket").collection("testing-all-bus");
+
+    // jwt
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: "24h" });
+      res.send({ token });
+    });
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -46,6 +74,14 @@ async function run() {
       console.log(newUser);
       const result = await userCollection.insertOne(newUser);
       console.log(result);
+      res.send(result);
+    });
+
+    // Post a bus:
+    app.post("/post-bus", async (req, res) => {
+      const newBus = req.body;
+      console.log(`"New bus post is: " ${newBus}`);
+      const result = await testingAllBus.insertOne(newBus);
       res.send(result);
     });
 
