@@ -31,6 +31,7 @@ async function run() {
         const userCollection = client.db('Dhaka_Bus_Ticket').collection('users');
         const ticketsCollection = client.db('Dhaka_Bus_Ticket').collection('tickets');
         const bookedBusCollection = client.db('Dhaka_Bus_Ticket').collection('booked-bus');
+        const contactInformation = client.db('Dhaka_Bus_Ticket').collection('contact');
         const allBusCollection = client.db('Dhaka_Bus_Ticket').collection('allBusCollection');
         const noticesCollection = client
             .db("Dhaka_Bus_Ticket")
@@ -154,6 +155,22 @@ async function run() {
             } catch (error) {
                 console.log(error);
             }
+        });
+
+        // ******************Contact Form************************************************
+        app.post("/contact", async (req, res) => {
+            const body = req.body;
+            body.createdAt = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+            const result = await contactInformation.insertOne(body);
+            if (result?.insertedId) {
+                return res.status(200).send(result);
+            } else {
+                return res.status(404).send({
+                    message: "can not Send Message try again leter",
+                    status: false,
+                });
+            }
+
         });
 
         // Send a ping to confirm a successful connection
