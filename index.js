@@ -30,6 +30,7 @@ async function run() {
         // Create Database and Collection:
         const userCollection = client.db('Dhaka_Bus_Ticket').collection('users');
         const ticketsCollection = client.db('Dhaka_Bus_Ticket').collection('tickets');
+        const bookedBusCollection = client.db('Dhaka_Bus_Ticket').collection('booked-bus');
         const allBusCollection = client.db('Dhaka_Bus_Ticket').collection('allBusCollection');
         const noticesCollection = client
             .db("Dhaka_Bus_Ticket")
@@ -105,6 +106,14 @@ async function run() {
                 console.log(error);
             }
         });
+        // *******************Book Bus Operation Start***********************
+        app.post("/book-bus", async (req, res) => {
+            const bookBusDetails = req.body;
+            const result = await bookedBusCollection.insertOne(bookBusDetails);
+            res.send(result);
+        })
+
+        // *****************Notice**********************
         app.get("/notices", async (req, res) => {
             try {
                 const allNotes = await noticesCollection.find().toArray();
