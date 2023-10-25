@@ -88,6 +88,14 @@ async function run() {
             res.send(getAllTicket);
         })
 
+        // Get My Ticket:
+        app.get('/my-ticket/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await ticketsCollection.find(filter).toArray();
+            res.send(result);
+        })
+
         app.post("/post-note", async (req, res) => {
             try {
                 const body = req.body;
