@@ -35,6 +35,22 @@ async function run() {
             .db("Dhaka_Bus_Ticket")
             .collection("notices");
 
+        // Load All User:
+        app.get('/users', async (req, res) => {
+            const allUsers = userCollection.find();
+            const result = await allUsers.toArray();
+            res.send(result);
+        })
+
+        // Post Users:
+        app.post('/users', async (req, res) => {
+            const newUser = req.body;
+            console.log(newUser);
+            const result = await userCollection.insertOne(newUser);
+            console.log(result);
+            res.send(result);
+        })
+
 
         // Load All Bus Collection:
         app.get('/all-bus', async (req, res) => {
@@ -57,6 +73,19 @@ async function run() {
             };
             const result = await allBusCollection.updateOne(filter, updateDoc, options);
             res.json(result)
+        })
+
+        // User Book Ticket Post:
+        app.post('/book-my-ticket', async (req, res) => {
+            const bookMyTicket = req.body;
+            const result = await ticketsCollection.insertOne(bookMyTicket);
+            res.send(result);
+        })
+
+        // Get All Tickets:
+        app.get('/all-ticket', async (req, res) => {
+            const getAllTicket = await ticketsCollection.find().toArray();
+            res.send(getAllTicket);
         })
 
         app.post("/post-note", async (req, res) => {
