@@ -49,17 +49,28 @@ async function run() {
         // Data Base Create:
         // Create Database and Collection:
         const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
-        const paymentCollection = client.db("Dhaka_Bus_Ticket").collection("paymentCollection");
-        const ticketsCollection = client.db("Dhaka_Bus_Ticket").collection("tickets");
-        const allBusCollection = client.db("Dhaka_Bus_Ticket").collection("allBusCollection");
-        const noticesCollection = client.db("Dhaka_Bus_Ticket").collection("notices");
-        const testingAllBus = client.db("Dhaka_Bus_Ticket").collection("testing-all-bus");
-        const bookBusCollection = client.db("Dhaka_Bus_Ticket").collection("book_bus_collection")
+        const ticketsCollection = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("tickets");
+        const allBusCollection = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("allBusCollection");
+        const noticesCollection = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("notices");
+        const testingAllBus = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("testing-all-bus");
+        const bookBusCollection = client
+            .db("Dhaka_Bus_Ticket")
+            .collection("book_bus_collection");
 
         // jwt
         app.post("/jwt", (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: "24h" });
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+                expiresIn: "24h",
+            });
             res.send({ token });
         });
 
@@ -68,6 +79,65 @@ async function run() {
             const allUsers = userCollection.find();
             const result = await allUsers.toArray();
             res.send(result);
+        });
+        // Load a single User
+        app.get("/single-user", async (req, res) => {
+            const email = req.query.email;
+            console.log(email);
+
+            try {
+                const query = { email: email };
+
+                if (!email) {
+                    return res
+                        .status(400)
+                        .json({ error: "Email parameter is missing" });
+                }
+                const result = await userCollection.findOne(query);
+                res.send(result);
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        // single-user-update(arif)
+        app.patch("/single-user/:userId", async (req, res) => {
+            const Id = req.params.userId;
+            const user = req.body;
+            console.log(user, Id);
+
+            try {
+                const filter = { _id: new ObjectId(Id) };
+                const existingUser = await userCollection.findOne(filter);
+
+                if (!existingUser) {
+                    // User not found
+                    return res
+                        .status(404)
+                        .json({ error: "User not found with this id" });
+                }
+                const options = { upsert: true };
+                const updatedUser = {
+                    $set: {
+                        name: user.name,
+                        number: user.number,
+                    },
+                };
+                console.log(updatedUser);
+                const result = await userCollection.updateOne(
+                    filter,
+                    updatedUser,
+                    options
+                );
+
+                res.send(result);
+            } catch (error) {
+                // Server error
+                console.log({
+                    message: "Dog Shit",
+                    error,
+                });
+                res.status(500).json({ error: "Server error" });
+            }
         });
 
         // Get current login user by email
@@ -86,7 +156,6 @@ async function run() {
             console.log(result);
             res.send(result);
         });
-
 
         // Post a bus:
         app.post("/post-bus", async (req, res) => {
@@ -115,7 +184,11 @@ async function run() {
                     bookedSeat: updatedBookedSeat,
                 },
             };
-            const result = await allBusCollection.updateOne(filter, updateDoc, options);
+            const result = await allBusCollection.updateOne(
+                filter,
+                updateDoc,
+                options
+            );
             res.json(result);
         });
 
@@ -140,13 +213,6 @@ async function run() {
             res.send(result);
         });
 
-        // Book Bus Post Method:
-        app.post('/book-bus', async (req, res) => {
-            const bookBusInformation = req.body;
-            const result = await bookBusCollection.insertOne(bookBusInformation);
-            res.send(result);
-        })
-
         app.post("/post-note", async (req, res) => {
             try {
                 const body = req.body;
@@ -156,6 +222,13 @@ async function run() {
                 console.log(error);
             }
         });
+
+        // ******************Book Bus*******************
+        app.post('/book-bus', async (req, res) => {
+            const bookBusInformation = req.body;
+            const result = await bookBusCollection.insertOne(bookBusInformation);
+            res.send(result);
+        })
         app.get("/notices", async (req, res) => {
             try {
                 const allNotes = await noticesCollection.find().toArray();
@@ -187,21 +260,46 @@ async function run() {
                         updateNoticeDate: body?.updateNoticeDate,
                     },
                 };
-                const result = await noticesCollection.updateOne(query, updateNotice, option);
+                const result = await noticesCollection.updateOne(
+                    query,
+                    updateNotice,
+                    option
+                );
                 res.send(result);
             } catch (error) {
                 console.log(error);
             }
         });
-
-
-        // **********************Payment Implement**************************
-
+        // get all feedback
+        app.get("/all-feedback", async (req, res) => {
+            try {
+                const response = await feedbackCollection.find().toArray();
+                console.log(response);
+                res.status(200).send({
+                    result: response,
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        });
+        // user-feedback posting
+        app.post("/user-feedback", async (req, res) => {
+            const feedbackInfo = req.body;
+            // console.log(feedbackInfo)
+            try {
+                const response = await feedbackCollection.insertOne(feedbackInfo);
+                res.send({ result: response });
+            } catch (error) {
+                console.log(error);
+            }
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
 
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        console.log(
+            "Pinged your deployment. You successfully connected to MongoDB!"
+        );
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
