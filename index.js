@@ -1,6 +1,6 @@
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const express = require("express");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
@@ -49,10 +49,12 @@ async function run() {
         // Data Base Create:
         // Create Database and Collection:
         const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
+        const paymentCollection = client.db("Dhaka_Bus_Ticket").collection("paymentCollection");
         const ticketsCollection = client.db("Dhaka_Bus_Ticket").collection("tickets");
         const allBusCollection = client.db("Dhaka_Bus_Ticket").collection("allBusCollection");
         const noticesCollection = client.db("Dhaka_Bus_Ticket").collection("notices");
         const testingAllBus = client.db("Dhaka_Bus_Ticket").collection("testing-all-bus");
+        const bookBusCollection = client.db("Dhaka_Bus_Ticket").collection("book_bus_collection")
 
         // jwt
         app.post("/jwt", (req, res) => {
@@ -68,6 +70,14 @@ async function run() {
             res.send(result);
         });
 
+        // Get current login user by email
+        app.get("/getUserByEmail/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.findOne(query);
+            res.send(result);
+        });
+
         // Post Users:
         app.post("/users", async (req, res) => {
             const newUser = req.body;
@@ -76,6 +86,7 @@ async function run() {
             console.log(result);
             res.send(result);
         });
+
 
         // Post a bus:
         app.post("/post-bus", async (req, res) => {
@@ -129,6 +140,13 @@ async function run() {
             res.send(result);
         });
 
+        // Book Bus Post Method:
+        app.post('/book-bus', async (req, res) => {
+            const bookBusInformation = req.body;
+            const result = await bookBusCollection.insertOne(bookBusInformation);
+            res.send(result);
+        })
+
         app.post("/post-note", async (req, res) => {
             try {
                 const body = req.body;
@@ -175,6 +193,10 @@ async function run() {
                 console.log(error);
             }
         });
+
+
+        // **********************Payment Implement**************************
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
