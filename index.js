@@ -81,6 +81,64 @@ async function run() {
       const result = await allUsers.toArray();
       res.send(result);
     });
+    // Load a single User
+    app.get("/single-user", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      try {
+        const query = { email: email };
+
+        if (!email) {
+          return res.status(400).json({ error: "Email parameter is missing" });
+        }
+        const result = await userCollection.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    // single-user-update(arif)
+    app.patch("/single-user/:userId", async (req, res) => {
+      const Id = req.params.userId;
+      const user = req.body;
+      console.log(user, Id);
+
+      if (user.number == true && user.name) {
+        try {
+          const filter = { _id: new ObjectId(Id) };
+          const existingUser = await userCollection.findOne(filter);
+
+          if (!existingUser) {
+            // User not found
+            return res
+              .status(404)
+              .json({ error: "User not found with this id" });
+          }
+          const options = { upsert: true };
+          const updatedUser = {
+            $set: {
+              name: user.name,
+              number: user.number,
+            },
+          };
+          console.log(updatedUser);
+          const result = await userCollection.updateOne(
+            filter,
+            updatedUser,
+            options
+          );
+
+          res.send(result);
+        } catch (error) {
+          // Server error
+          console.log({
+            message: "Dog Shit",
+            error,
+          });
+          res.status(500).json({ error: "Server error" });
+        }
+      }
+    });
 
     // Get current login user by email
     app.get("/getUserByEmail/:email", async (req, res) => {
@@ -201,6 +259,29 @@ async function run() {
           option
         );
         res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    // get all feedback
+    app.get("/all-feedback", async (req, res) => {
+      try {
+        const response = await feedbackCollection.find().toArray();
+        console.log(response);
+        res.status(200).send({
+          result: response,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    // user-feedback posting
+    app.post("/user-feedback", async (req, res) => {
+      const feedbackInfo = req.body;
+      // console.log(feedbackInfo)
+      try {
+        const response = await feedbackCollection.insertOne(feedbackInfo);
+        res.send({ result: response });
       } catch (error) {
         console.log(error);
       }
