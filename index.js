@@ -6,7 +6,7 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
-// const crypto = require("crypto").randomBytes(64).toString("hex");
+const crypto = require("crypto").randomBytes(64).toString("hex");
 // console.log(crypto);
 
 // middleware
