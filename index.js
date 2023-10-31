@@ -1,19 +1,20 @@
 require("dotenv").config();
 const express = require("express");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
-// const crypto = require("crypto").randomBytes(64).toString("hex");
+const crypto = require("crypto").randomBytes(64).toString("hex");
 // console.log(crypto);
 
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 // middleware
 app.use(cors());
 app.use(express.json());
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wapucld.mongodb.net/?retryWrites=true&w=majority`;
+const username = process.env.DB_USER;
+const password = process.env.DB_PASS;
+const uri = `mongodb+srv://${username}:${password}@cluster0.wapucld.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -65,6 +66,12 @@ async function run() {
     const testingAllBus = client
       .db("Dhaka_Bus_Ticket")
       .collection("testing-all-bus");
+    const bookBusCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("book_bus_collection");
+    const feedbackCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("allFeedback");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -85,6 +92,7 @@ async function run() {
     app.get("/single-user", async (req, res) => {
       const email = req.query.email;
       console.log(email);
+
       try {
         const query = { email: email };
 
@@ -103,43 +111,38 @@ async function run() {
       const user = req.body;
       console.log(user, Id);
 
-      if (user.number == true && user.name) {
-        try {
-          const filter = { _id: new ObjectId(Id) };
-          const existingUser = await userCollection.findOne(filter);
+      try {
+        const filter = { _id: new ObjectId(Id) };
+        const existingUser = await userCollection.findOne(filter);
 
-          if (!existingUser) {
-            // User not found
-            return res
-              .status(404)
-              .json({ error: "User not found with this id" });
-          }
-          const options = { upsert: true };
-          const updatedUser = {
-            $set: {
-              name: user.name,
-              number: user.number,
-            },
-          };
-          console.log(updatedUser);
-          const result = await userCollection.updateOne(
-            filter,
-            updatedUser,
-            options
-          );
-
-          res.send(result);
-        } catch (error) {
-          // Server error
-          console.log({
-            message: "Dog Shit",
-            error,
-          });
-          res.status(500).json({ error: "Server error" });
+        if (!existingUser) {
+          // User not found
+          return res.status(404).json({ error: "User not found with this id" });
         }
+        const options = { upsert: true };
+        const updatedUser = {
+          $set: {
+            name: user.name,
+            number: user.number,
+          },
+        };
+        console.log(updatedUser);
+        const result = await userCollection.updateOne(
+          filter,
+          updatedUser,
+          options
+        );
+
+        res.send(result);
+      } catch (error) {
+        // Server error
+        console.log({
+          message: "Dog Shit",
+          error,
+        });
+        res.status(500).json({ error: "Server error" });
       }
     });
-
     // Get current login user by email
     app.get("/getUserByEmail/:email", async (req, res) => {
       const email = req.params.email;
@@ -147,7 +150,6 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
-
     // Post Users:
     app.post("/users", async (req, res) => {
       const newUser = req.body;
@@ -156,7 +158,6 @@ async function run() {
       console.log(result);
       res.send(result);
     });
-
     // Post a bus:
     app.post("/post-bus", async (req, res) => {
       const newBus = req.body;
@@ -164,7 +165,6 @@ async function run() {
       const result = await testingAllBus.insertOne(newBus);
       res.send(result);
     });
-
     // Load All Bus Collection:
     app.get("/all-bus", async (req, res) => {
       const allBus = allBusCollection.find();
@@ -191,20 +191,17 @@ async function run() {
       );
       res.json(result);
     });
-
     // User Book Ticket Post:
     app.post("/book-my-ticket", async (req, res) => {
       const bookMyTicket = req.body;
       const result = await ticketsCollection.insertOne(bookMyTicket);
       res.send(result);
     });
-
     // Get All Tickets:
     app.get("/all-ticket", async (req, res) => {
       const getAllTicket = await ticketsCollection.find().toArray();
       res.send(getAllTicket);
     });
-
     // Get My Ticket:
     app.get("/my-ticket/:email", async (req, res) => {
       const email = req.params.email;
@@ -221,6 +218,13 @@ async function run() {
       } catch (error) {
         console.log(error);
       }
+    });
+
+    // ******************Book Bus*******************
+    app.post("/book-bus", async (req, res) => {
+      const bookBusInformation = req.body;
+      const result = await bookBusCollection.insertOne(bookBusInformation);
+      res.send(result);
     });
     app.get("/notices", async (req, res) => {
       try {
