@@ -27,25 +27,26 @@ const client = new MongoClient(uri, {
 
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
+  console.log(authorization, 31);
   if (!authorization) {
     return res
       .status(401)
-      .json({ error: true, message: "Unauthorized access" });
+      .send({ error: true, message: "unauthorized access" });
   }
 
   const token = authorization.split(" ")[1];
-
+  console.log(token);
   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
     if (err) {
       return res
         .status(401)
-        .json({ error: true, message: "Unauthorized access" });
+        .send({ error: true, message: "unauthorized access2" });
     }
+
     req.decoded = decoded;
     next();
   });
 };
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -66,21 +67,30 @@ async function run() {
     const testingAllBus = client
       .db("Dhaka_Bus_Ticket")
       .collection("testing-all-bus");
-    const bookBusCollection = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("book_bus_collection");
-    const feedbackCollection = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("allFeedback");
 
     // jwt
     app.post("/jwt", (req, res) => {
       const user = req.body;
+      // console.log(user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
-        expiresIn: "24h",
+        expiresIn: "1h",
       });
       res.send({ token });
     });
+    // admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      // console.log(email);
+      const query = { email: email };
+      // console.log(query);
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -143,6 +153,7 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
+
     // Get current login user by email
     app.get("/getUserByEmail/:email", async (req, res) => {
       const email = req.params.email;
@@ -150,6 +161,7 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     });
+
     // Post Users:
     app.post("/users", async (req, res) => {
       const newUser = req.body;
@@ -158,6 +170,7 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
     // Post a bus:
     app.post("/post-bus", async (req, res) => {
       const newBus = req.body;
@@ -165,6 +178,7 @@ async function run() {
       const result = await testingAllBus.insertOne(newBus);
       res.send(result);
     });
+
     // Load All Bus Collection:
     app.get("/all-bus", async (req, res) => {
       const allBus = allBusCollection.find();
@@ -191,17 +205,20 @@ async function run() {
       );
       res.json(result);
     });
+
     // User Book Ticket Post:
     app.post("/book-my-ticket", async (req, res) => {
       const bookMyTicket = req.body;
       const result = await ticketsCollection.insertOne(bookMyTicket);
       res.send(result);
     });
+
     // Get All Tickets:
     app.get("/all-ticket", async (req, res) => {
       const getAllTicket = await ticketsCollection.find().toArray();
       res.send(getAllTicket);
     });
+
     // Get My Ticket:
     app.get("/my-ticket/:email", async (req, res) => {
       const email = req.params.email;
@@ -218,13 +235,6 @@ async function run() {
       } catch (error) {
         console.log(error);
       }
-    });
-
-    // ******************Book Bus*******************
-    app.post("/book-bus", async (req, res) => {
-      const bookBusInformation = req.body;
-      const result = await bookBusCollection.insertOne(bookBusInformation);
-      res.send(result);
     });
     app.get("/notices", async (req, res) => {
       try {
@@ -286,6 +296,19 @@ async function run() {
       try {
         const response = await feedbackCollection.insertOne(feedbackInfo);
         res.send({ result: response });
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    app.get("/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      try {
+        const email = req.params.email;
+        console.log(email, 290);
+        const filter = { email: email };
+        console.log(filter, 290);
+        const result = await userCollection.findOne(filter);
+        console.log(result, 290);
+        res.send({ role: result?.role });
       } catch (error) {
         console.log(error);
       }
