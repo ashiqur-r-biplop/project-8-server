@@ -64,9 +64,9 @@ async function run() {
     const noticesCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("notices");
-    const testingAllBus = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("testing-all-bus");
+    const bookBusCollection = client
+      .db("Book_Bus")
+      .collection("notices");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -171,13 +171,7 @@ async function run() {
       res.send(result);
     });
 
-    // Post a bus:
-    app.post("/post-bus", async (req, res) => {
-      const newBus = req.body;
-      console.log(`"New bus post is: " ${newBus}`);
-      const result = await testingAllBus.insertOne(newBus);
-      res.send(result);
-    });
+
 
     // Load All Bus Collection:
     app.get("/all-bus", async (req, res) => {
@@ -226,6 +220,13 @@ async function run() {
       const result = await ticketsCollection.find(filter).toArray();
       res.send(result);
     });
+
+    // Book Bus API:
+    app.post('/book-bus', async (req, res) => {
+      const bookBus = req.body;
+      const result = await bookBusCollection.insertOne(bookBus);
+      res.send(result);
+    })
 
     app.post("/post-note", async (req, res) => {
       try {
