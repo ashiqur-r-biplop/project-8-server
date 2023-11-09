@@ -75,6 +75,12 @@ async function run() {
         res.send({ token });
       });
 
+
+      // get admin role
+
+      app.get('/admin/:email',verifyJWT, async (req,res) => {
+
+      })
       // Load All User:
       app.get("/users", async (req, res) => {
         const allUsers = userCollection.find();
