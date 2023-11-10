@@ -72,6 +72,9 @@ async function run() {
     const testingAllBus = client
       .db("Dhaka_Bus_Ticket")
       .collection("testing-all-bus");
+      const newsLetterSubscriber = client.
+      db("Dhaka_Bus_Ticket")
+      .collection("subscriber");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -96,6 +99,12 @@ async function run() {
       }
       next();
     };
+
+ // subscriber 
+  app.post("/subscriber",(req,res)=>{
+    const email = req.body;
+    console.log(email);
+  })
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -231,6 +240,13 @@ async function run() {
       const result = await ticketsCollection.find(filter).toArray();
       res.send(result);
     });
+
+    // Book Bus API:
+    app.post('/book-bus', async (req, res) => {
+      const bookBus = req.body;
+      const result = await bookBusCollection.insertOne(bookBus);
+      res.send(result);
+    })
 
     app.post("/post-note", async (req, res) => {
       try {
