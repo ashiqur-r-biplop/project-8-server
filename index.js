@@ -72,10 +72,9 @@ async function run() {
     const testingAllBus = client
       .db("Dhaka_Bus_Ticket")
       .collection("testing-all-bus");
-      const newsLetterSubscriber = client.
+    const newsLetterSubscriber = client.
       db("Dhaka_Bus_Ticket")
       .collection("subscriber");
-    
     const bookBusCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("BookBusCollection");
@@ -104,11 +103,11 @@ async function run() {
       next();
     };
 
- // subscriber 
-  app.post("/subscriber",(req,res)=>{
-    const email = req.body;
-    console.log(email);
-  })
+    // subscriber 
+    app.post("/subscriber", (req, res) => {
+      const email = req.body;
+      console.log(email);
+    })
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -133,6 +132,7 @@ async function run() {
         console.log(error);
       }
     });
+
     // single-user-update(arif)
     app.patch("/single-user/:userId", async (req, res) => {
       const Id = req.params.userId;
