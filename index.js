@@ -65,8 +65,11 @@ async function run() {
       .db("Dhaka_Bus_Ticket")
       .collection("notices");
     const bookBusCollection = client
-      .db("Book_Bus")
-      .collection("notices");
+      .db("Dhaka_Bus_Ticket")
+      .collection("BookBusCollection");
+    const feedbackCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("feedBack");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -301,7 +304,7 @@ async function run() {
         console.log(error);
       }
     });
-    app.get("/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
+    app.get("/admin/:email", verifyJWT, async (req, res) => {
       try {
         const email = req.params.email;
         console.log(email, 290);
