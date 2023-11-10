@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
-
+const SSLCommerzPayment = require("sslcommerz-lts");
 const crypto = require("crypto").randomBytes(64).toString("hex");
 // console.log(crypto);
 
@@ -14,6 +14,9 @@ app.use(cors());
 app.use(express.json());
 const username = process.env.DB_USER;
 const password = process.env.DB_PASS;
+const store_id = process.env.Store_ID;
+const store_passwd = process.env.Store_Password;
+const is_live = false;
 const uri = `mongodb+srv://${username}:${password}@cluster0.wapucld.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -54,6 +57,8 @@ async function run() {
 
     // Data Base Create:
     // Create Database and Collection:
+    const usersOrderCollection = client.db("Dhaka_Bus_Ticket").collection("order");
+    const feedbackCollection = client.db("Dhaka_Bus_Ticket").collection("allFeedback");
     const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
     const ticketsCollection = client
       .db("Dhaka_Bus_Ticket")
@@ -67,9 +72,6 @@ async function run() {
     const bookBusCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("BookBusCollection");
-    const feedbackCollection = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("feedBack");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -304,7 +306,7 @@ async function run() {
         console.log(error);
       }
     });
-    app.get("/admin/:email", verifyJWT, async (req, res) => {
+    app.get("/admin/:email", async (req, res) => {
       try {
         const email = req.params.email;
         console.log(email, 290);
@@ -317,7 +319,113 @@ async function run() {
         console.log(error);
       }
     });
+    // payment
+    app.post("/order", async (req, res) => {
+      const tran_id = new ObjectId().toString();
+      const order = req.body;
+      console.log(order);
 
+      const data = {
+        total_amount: order.price,
+        currency: "BDT",
+        tran_id: tran_id, // use unique tran_id for each api call
+        success_url: "https://dhaka-bus-ticket-server-two.vercel.app/success",
+        fail_url: "https://dhaka-bus-ticket-server-two.vercel.app/failure",
+        cancel_url: "https://dhaka-bus-ticket-server-two.vercel.app/cancel",
+        ipn_url: "https://dhaka-bus-ticket-server-two.vercel.app/ipn",
+        shipping_method: "Courier",
+        product_name: "Computer.",
+        product_category: "Electronic",
+        product_profile: "general",
+        cus_name: "Customer Name",
+        cus_email: order.email,
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: "01711111111",
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      // console.log(data)
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        res.send({ url: GatewayPageURL });
+        const finalOrder = {
+          transitionId: tran_id,
+          customerEmail: order.email,
+        };
+        const result = usersOrderCollection.insertOne(finalOrder);
+      });
+    });
+    app.post("/success", async (req, res) => {
+      const result = await usersOrderCollection.updateOne(
+        { tran_id: req.body.tran_id },
+        {
+          $set: {
+            val_id: req.body.val_id,
+          },
+        }
+      );
+      res.redirect(`https://deft-paletas-f3d1fd.netlify.app/`);
+    });
+
+    app.post("/failure", async (req, res) => {
+      const result = await usersOrderCollection.deleteOne({
+        tran_id: req.body.tran_id,
+      });
+
+      res.redirect(`https://deft-paletas-f3d1fd.netlify.app/`);
+    });
+
+    app.post("/cancel", async (req, res) => {
+      const result = await usersOrderCollection.deleteOne({
+        tran_id: req.body.tran_id,
+      });
+      res.redirect(`https://deft-paletas-f3d1fd.netlify.app/`);
+    });
+
+    app.post("/ipn", (req, res) => {
+      console.log(req.body);
+      res.send(req.body);
+    });
+
+    app.post("/validate", async (req, res) => {
+      const result = await usersOrderCollection.findOne({
+        tran_id: req.body.tran_id,
+      });
+      if (result.val_id === req.body.val_id) {
+        const update = await usersOrderCollection.updateOne(
+          { tran_id: req.body.tran_id },
+          {
+            $set: {
+              paymentStatus: "payment Complete",
+            },
+          }
+        );
+        console.log(update);
+        res.send(update.modifiedCount > 0);
+      } else {
+        res.send("Chor detected");
+      }
+    });
+
+    app.get("/orders/:tran_id", async (req, res) => {
+      const id = req.params.tran_id;
+      const result = await usersOrderCollection.findOne({ tran_id: id });
+      res.json(result);
+    });
+    // payment
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
 
