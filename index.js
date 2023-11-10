@@ -54,7 +54,9 @@ async function run() {
 
     // Data Base Create:
     // Create Database and Collection:
-    const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
+    const userCollection = client.
+    db("Dhaka_Bus_Ticket")
+    .collection("users");
     const ticketsCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("tickets");
@@ -67,6 +69,10 @@ async function run() {
     const testingAllBus = client
       .db("Dhaka_Bus_Ticket")
       .collection("testing-all-bus");
+      const newsLetterSubscriber = client.
+      db("Dhaka_Bus_Ticket")
+      .collection("subscriber");
+    
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -91,6 +97,12 @@ async function run() {
       }
       next();
     };
+
+ // subscriber 
+  app.post("/subscriber",(req,res)=>{
+    const email = req.body;
+    console.log(email);
+  })
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -313,7 +325,7 @@ async function run() {
         console.log(error);
       }
     });
-
+ 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
 
