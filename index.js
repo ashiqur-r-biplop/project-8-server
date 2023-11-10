@@ -69,6 +69,13 @@ async function run() {
     const noticesCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("notices");
+    const testingAllBus = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("testing-all-bus");
+      const newsLetterSubscriber = client.
+      db("Dhaka_Bus_Ticket")
+      .collection("subscriber");
+    
     const bookBusCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("BookBusCollection");
@@ -96,6 +103,12 @@ async function run() {
       }
       next();
     };
+
+ // subscriber 
+  app.post("/subscriber",(req,res)=>{
+    const email = req.body;
+    console.log(email);
+  })
 
     // Load All User:
     app.get("/users", async (req, res) => {
