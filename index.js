@@ -77,8 +77,8 @@ async function run() {
       .collection("subscriber");
     
     const bookBusCollection = client
-      .db("Book_Bus")
-      .collection("notices");
+      .db("Dhaka_Bus_Ticket")
+      .collection("BookBusCollection");
 
     // jwt
     app.post("/jwt", (req, res) => {
