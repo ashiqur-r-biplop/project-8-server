@@ -69,15 +69,15 @@ async function run() {
     const noticesCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("notices");
-    const testingAllBus = client
-      .db("Dhaka_Bus_Ticket")
-      .collection("testing-all-bus");
     const newsLetterSubscriber = client.
       db("Dhaka_Bus_Ticket")
       .collection("subscriber");
     const bookBusCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("BookBusCollection");
+    const contactCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("contactCollection");
 
     // jwt
     app.post("/jwt", (req, res) => {
@@ -238,6 +238,17 @@ async function run() {
       const result = await ticketsCollection.find(filter).toArray();
       res.send(result);
     });
+
+    app.post('/contact-form', async (req, res) => {
+      const contactDetails = req.body;
+      const result = await contactCollection.insertOne(contactDetails);
+      res.send(result);
+    })
+
+    app.get('/contact', async (req, res) => {
+      const contact = await contactCollection.find().toArray();
+      res.send(contact);
+    })
 
     // Book Bus API:
     app.post('/book-bus', async (req, res) => {
