@@ -9,6 +9,7 @@ const crypto = require("crypto").randomBytes(64).toString("hex");
 // console.log(crypto);
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { CLIENT_RENEG_LIMIT } = require("tls");
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -102,12 +103,47 @@ async function run() {
       }
       next();
     };
+//user billing info route
 
-    // subscriber 
-    app.post("/subscriber", (req, res) => {
-      const email = req.body;
-      console.log(email);
+
+// user billing info route
+app.get('/user-bills',async(req,res)=>{
+  try {
+    const result = await usersOrderCollection.find().toArray();
+    res.status(200).send({
+      message:true,
+      bills:result
     })
+  } catch (error) {
+    console.log(error);
+  }
+})
+
+ // subscriber 
+  app.post("/subscriber",async(req,res)=>{
+    const email = req.body;
+    try {
+     const result =  await newsLetterSubscriber.insertOne(email)
+     res.send(result);
+    } catch (error) {
+      console.log(error);
+    }
+  })
+  // get subsciber count 
+
+  app.get("/subscriberCount",async(req,res)=>{
+ 
+    try {
+      result = await newsLetterSubscriber.countDocuments();
+      // console.log(result);
+      res.status(200).send({
+        success: true,
+        count: result,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  })
 
     // Load All User:
     app.get("/users", async (req, res) => {
