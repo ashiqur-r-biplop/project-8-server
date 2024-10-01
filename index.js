@@ -58,8 +58,12 @@ async function run() {
 
     // Data Base Create:
     // Create Database and Collection:
-    const usersOrderCollection = client.db("Dhaka_Bus_Ticket").collection("order");
-    const feedbackCollection = client.db("Dhaka_Bus_Ticket").collection("allFeedback");
+    const usersOrderCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("order");
+    const feedbackCollection = client
+      .db("Dhaka_Bus_Ticket")
+      .collection("allFeedback");
     const userCollection = client.db("Dhaka_Bus_Ticket").collection("users");
     const ticketsCollection = client
       .db("Dhaka_Bus_Ticket")
@@ -70,8 +74,8 @@ async function run() {
     const noticesCollection = client
       .db("Dhaka_Bus_Ticket")
       .collection("notices");
-    const newsLetterSubscriber = client.
-      db("Dhaka_Bus_Ticket")
+    const newsLetterSubscriber = client
+      .db("Dhaka_Bus_Ticket")
       .collection("subscriber");
     const bookBusCollection = client
       .db("Dhaka_Bus_Ticket")
@@ -103,47 +107,42 @@ async function run() {
       }
       next();
     };
-//user billing info route
+    //user billing info route
 
+    // user billing info route
+    app.get("/user-bills", async (req, res) => {
+      try {
+        const result = await usersOrderCollection.find().toArray();
+        res.status(200).send({
+          message: true,
+          bills: result,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    });
 
-// user billing info route
-app.get('/user-bills',async(req,res)=>{
-  try {
-    const result = await usersOrderCollection.find().toArray();
-    res.status(200).send({
-      message:true,
-      bills:result
-    })
-  } catch (error) {
-    console.log(error);
-  }
-})
+    // subscriber
+    app.post("/subscriber", async (req, res) => {
+      const email = req.body;
+      try {
+        const result = await newsLetterSubscriber.insertOne(email);
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+    // get subsciber count
 
- // subscriber 
-  app.post("/subscriber",async(req,res)=>{
-    const email = req.body;
-    try {
-     const result =  await newsLetterSubscriber.insertOne(email)
-     res.send(result);
-    } catch (error) {
-      console.log(error);
-    }
-  })
-  // get subsciber count 
-
-  app.get("/subscriberCount",async(req,res)=>{
- 
-    try {
-      result = await newsLetterSubscriber.countDocuments();
-      // console.log(result);
-      res.status(200).send({
-        success: true,
-        count: result,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  })
+    app.get("/subscriberCount", async (req, res) => {
+      try {
+        const result = await newsLetterSubscriber.countDocuments();
+        console.log(result);
+        res.send(result)
+      } catch (error) {
+        console.log(error);
+      }
+    });
 
     // Load All User:
     app.get("/users", async (req, res) => {
@@ -281,23 +280,23 @@ app.get('/user-bills',async(req,res)=>{
       res.send(result);
     });
 
-    app.post('/contact-form', async (req, res) => {
+    app.post("/contact-form", async (req, res) => {
       const contactDetails = req.body;
       const result = await contactCollection.insertOne(contactDetails);
       res.send(result);
-    })
+    });
 
-    app.get('/contact', async (req, res) => {
+    app.get("/contact", async (req, res) => {
       const contact = await contactCollection.find().toArray();
       res.send(contact);
-    })
+    });
 
     // Book Bus API:
-    app.post('/book-bus', async (req, res) => {
+    app.post("/book-bus", async (req, res) => {
       const bookBus = req.body;
       const result = await bookBusCollection.insertOne(bookBus);
       res.send(result);
-    })
+    });
 
     app.post("/post-note", async (req, res) => {
       try {
